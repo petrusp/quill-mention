@@ -8,6 +8,7 @@ const numberIsNaN = require('./imports/numberisnan.js');
 class Mention {
   constructor(quill, options) {
     this.isOpen = false;
+    this.editing = false;
     this.itemIndex = 0;
     this.mentionCharPos = null;
     this.cursorPos = null;
@@ -194,11 +195,14 @@ class Mention {
 
     const prevMentionCharPos = this.mentionCharPos;
 
+    this.editing = true;
     this.quill
       .deleteText(this.mentionCharPos, this.cursorPos - this.mentionCharPos, Quill.sources.USER);
     this.quill.insertEmbed(prevMentionCharPos, 'mention', render, Quill.sources.USER);
     this.quill.insertText(prevMentionCharPos + 1, ' ', Quill.sources.USER);
     this.quill.setSelection(prevMentionCharPos + 2, Quill.sources.USER);
+    this.editing = false;
+
     this.hideMentionList();
   }
 
@@ -401,7 +405,8 @@ class Mention {
   }
 
   onTextChange(delta, oldDelta, source) {
-    if (source === 'user') {
+    // don't react to your own changes before editing is complete
+    if (source === 'user' && !this.editing) {
       this.onSomethingChange();
     }
   }
